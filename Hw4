@@ -1,0 +1,73 @@
+library(tidyverse)
+library(dplyr)
+
+#1.
+
+airport<-airport%>%
+  filter(origin == "RDU" | dest == "RDU") %>%
+  #departure and arrival flights to abf from RDU
+  group_by(origin, dest) %>%
+  # Summarizingthe total number of passengers for each airport pair
+  summarise(passengers = sum(passengers, na.rm = TRUE)) %>%
+  # Filtirig out airports with < 10,000 passengers
+  filter(passengers > 10000) %>%
+  arrange(desc(passengers))
+print(airport)
+
+1 RDU    ATL       540190
+2 ATL    RDU       537720
+3 CLT    RDU       378130
+4 RDU    CLT       370480
+5 LGA    RDU       274490
+6 RDU    LGA       272810
+7 RDU    MCO       259640
+8 MCO    RDU       259570
+9 RDU    DEN       226520
+10 DFW    RDU       223120
+
+library(tidycensus)
+
+plot(x = `airport_pairs.(1)`$distancemiles, y= `airport_pairs.(1)`$passengers)
+#The trend is as the distance miles in the fligh increases the passengers decrease  
+
+plot(x = `airport_pairs.(1)`$origin_cbsa, y=`airport_pairs.(1)`$passengers)
+#
+
+plot(x = `airport_pairs.(1)`$dest_cbsa, y= `airport_pairs.(1)`$passengers)
+#Scattter plot for destination population and total passengers 
+
+
+##extra Credit
+plot(x = `airport_pairs.(1)`)
+
+#Linear passenger volume regression , 
+results <- lm(passengers ~ origin_cbsa + distancemiles, data = `airport_pairs.(1)`)
+summary(results) 
+#results of linear regression model
+
+#
+#Residuals:
+#  Min      1Q  Median      3Q     Max 
+#-93805  -67302  -49800    3853 1206868 
+
+#Coefficients:
+#Estimate Std. Error t value Pr(>|t|)    
+#(Intercept)    1.004e+05  4.336e+03  23.148  < 2e-16 ***
+# origin_cbsa   -4.985e-01  1.265e-01  -3.941 8.16e-05 ***
+#distancemiles -1.439e+01  1.927e+00  -7.468 8.86e-14 ***
+---
+  # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+  
+  #Residual standard error: 133000 on 9396 degrees of freedom
+  #(103 observations deleted due to missingness)
+  #Multiple R-squared:  0.008308,	Adjusted R-squared:  0.008097 
+  #F-statistic: 39.36 on 2 and 9396 DF,  p-value: < 2.2e-16
+  
+  #Keeping other predictors constant, each coefficient shows the anticipated change in the dependent variable (presumably passengers) 
+  #for every unit increase in the predictor.
+  
+  #intercept: 100,400 (1.004e+05)
+  #When both origin_cbsa and distancemiles are zero, this is the approximate baseline passenger count.
+  #It is statistically significant because of its extremely low p-value (< 2e-16).
+  #Coefficient Interpretation: Origin_cbsa shows an unexpectedly negative association with passenger volume, although the coefficients make sense in direction for distance miles.
+  #The coefficients are statistically significant, but because of the low R-squared, this does not necessarily mean that they are practically relevan
